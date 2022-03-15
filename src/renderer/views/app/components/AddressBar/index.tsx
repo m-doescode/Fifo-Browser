@@ -76,7 +76,6 @@ const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     e.currentTarget.blur();
     const { value } = e.currentTarget;
     let url = value;
-
     if (isURL(value)) {
       url = value.indexOf('://') === -1 ? `http://${value}` : value;
     } else {
@@ -91,7 +90,7 @@ const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 let addressbarRef: HTMLDivElement;
 
 const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  store.tabs.selectedTab.addressbarValue = e.currentTarget.value;
+  store.tabs.selectedTab.addressbarValue = '';
 
   const { left, width } = addressbarRef.getBoundingClientRect();
 

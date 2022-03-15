@@ -1,7 +1,7 @@
 /* Copyright (c) 2021-2022 SnailDOS */
 
 import { BrowserView, app, ipcMain } from 'electron';
-import { parse as parseUrl } from 'url';
+import { URL } from 'url';
 import { getViewMenu } from './menus/view';
 import { AppWindow } from './windows';
 import { IHistoryItem, IBookmark } from '~/interfaces';
@@ -64,15 +64,16 @@ export class View {
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: true,
-        enableRemoteModule: false,
         partition: incognito ? 'view_incognito' : 'persist:view',
         plugins: true,
         nativeWindowOpen: true,
         webSecurity: true,
+        // @ts-ignore
+        transparent: true,
         javascript: true,
-        worldSafeExecuteJavaScript: false,
       },
     });
+    require('@electron/remote/main').enable(this.browserView.webContents);
 
     this.incognito = incognito;
 
@@ -121,7 +122,6 @@ export class View {
 
     this.webContents.addListener('did-navigate', async (e, url) => {
       this.emitEvent('did-navigate', url);
-
       await this.addHistoryItem(url);
       this.updateURL(url);
     });
@@ -201,6 +201,7 @@ export class View {
     this.webContents.addListener(
       'did-fail-load',
       (e, errorCode, errorDescription, validatedURL, isMainFrame) => {
+        console.error(errorCode, errorDescription, validatedURL, isMainFrame);
         // ignore -3 (ABORTED) - An operation was aborted (due to user action).
         if (isMainFrame && errorCode !== -3) {
           this.errorURL = validatedURL;
@@ -264,7 +265,7 @@ export class View {
         certificate: Electron.Certificate,
         callback: Function,
       ) => {
-        console.log(certificate, error, url);
+        // TODO: properly handle insecure websites.
         event.preventDefault();
         this.errorURL = url;
         this.webContents.loadURL(
@@ -445,7 +446,7 @@ export class View {
   }
 
   public get hostname() {
-    return parseUrl(this.url).hostname;
+    return new URL(this.url).hostname;
   }
 
   public emitEvent(event: TabEvent, ...args: any[]) {
